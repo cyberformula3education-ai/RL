@@ -1,0 +1,742 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Мышка и Q-таблица</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column on squared notebook paper; each section = idea → a calculation card advanced with «Дальше»; a live maze lab at the end. */
+:root{
+  --paper:#F1F4F8; --grid:#DFE6EF; --card:#FFFFFF; --ink:#17233A; --muted:#55647E; --line:#CBD5E3;
+  --accent:#2C54C6; --accent-ink:#FFFFFF; --accent-soft:#E4EBFB;
+  --cheese:#C98F00; --cheese-soft:#FBEEC4; --trap:#C93C32; --trap-soft:#F8DAD7; --wall:#3B4862; --mouse:#8A94A8; --tip-bg:#17233A; --tip-fg:#F1F4F8; --tip-sym:#F2C34E;
+  --f-display:"Unbounded","Arial Black",system-ui,sans-serif;
+  --f-body:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0E1421; --grid:#172136; --card:#141D2F; --ink:#E3E9F3; --muted:#93A1B9; --line:#2A3751;
+  --accent:#7FA1FF; --accent-ink:#0E1421; --accent-soft:#1D2A4A;
+  --cheese:#F0BC3A; --cheese-soft:#3A3012; --trap:#FF7B6F; --trap-soft:#3E1F1D; --wall:#5A6A8A; --mouse:#AAB4C6; --tip-bg:#E3E9F3; --tip-fg:#0E1421; --tip-sym:#2C54C6; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0E1421; --grid:#172136; --card:#141D2F; --ink:#E3E9F3; --muted:#93A1B9; --line:#2A3751;
+  --accent:#7FA1FF; --accent-ink:#0E1421; --accent-soft:#1D2A4A;
+  --cheese:#F0BC3A; --cheese-soft:#3A3012; --trap:#FF7B6F; --trap-soft:#3E1F1D; --wall:#5A6A8A; --mouse:#AAB4C6; --tip-bg:#E3E9F3; --tip-fg:#0E1421; --tip-sym:#2C54C6; color-scheme:dark}
+
+html{scroll-behavior:smooth;scroll-padding-top:64px}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+body{
+  background-color:var(--paper); color:var(--ink);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;
+  font-family:var(--f-body); font-size:16px; line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px)); padding-block:0 64px;
+}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--paper)}
+main{max-width:880px;margin:0 auto;display:flex;flex-direction:column;gap:56px}
+p{margin:0}
+.prose{max-width:66ch;display:flex;flex-direction:column;gap:12px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.2}
+h1{font-size:clamp(2rem,6vw,3.2rem);font-weight:700;letter-spacing:-.01em}
+h2{font-size:clamp(1.25rem,3.4vw,1.6rem);font-weight:700;display:flex;align-items:baseline;gap:12px}
+h3{font-size:1rem;font-weight:500}
+.sec-no{font-family:var(--f-mono);font-size:.85rem;font-weight:600;color:var(--accent-ink);background:var(--accent);border-radius:6px;padding:2px 8px;flex:none;transform:translateY(-2px)}
+b,strong{font-weight:600}
+.n{font-family:var(--f-mono);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+
+/* nav */
+.nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border-bottom:1px solid var(--line);margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.nav-in{max-width:880px;margin:0 auto;display:flex;gap:4px;overflow-x:auto;padding-block:10px;scrollbar-width:none}
+.nav a{flex:none;color:var(--muted);text-decoration:none;font-size:.85rem;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.nav a:hover{color:var(--ink);background:var(--accent-soft)}
+.nav a:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
+/* hero */
+.hero{padding-top:40px;display:flex;flex-direction:column;gap:16px}
+.eyebrow{font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.lead{font-size:1.1rem;max-width:62ch}
+.rules{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-family:var(--f-mono);font-size:.82rem;padding:4px 10px;border-radius:6px;border:1px solid var(--line);background:var(--card)}
+.chip.pos{background:var(--cheese-soft);border-color:transparent}
+.chip.neg{background:var(--trap-soft);border-color:transparent}
+
+section{display:flex;flex-direction:column;gap:20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.card-title{font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.formula{font-family:var(--f-mono);font-size:.95rem;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto;white-space:nowrap}
+
+/* stepper */
+.calc{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;counter-reset:st}
+.calc li{border-left:3px solid var(--line);padding:6px 12px;border-radius:0 8px 8px 0}
+.calc li.cur{border-left-color:var(--accent);background:var(--accent-soft)}
+.calc li.hint{color:var(--muted);font-style:italic}
+.ctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.count{color:var(--muted);font-size:.85rem;font-variant-numeric:tabular-nums;margin-left:auto}
+button{font:inherit;font-size:.9rem;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:7px 14px;cursor:pointer;line-height:1.3}
+button:hover:not(:disabled){border-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+button[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* controls */
+.controls{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center}
+.slider{display:flex;align-items:center;gap:10px;font-size:.92rem}
+.slider input[type=range]{width:150px;accent-color:var(--accent)}
+.slider output{font-family:var(--f-mono);font-weight:600;min-width:3.2em;display:inline-block}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg label{padding:6px 12px;cursor:pointer;font-size:.9rem}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label:has(input:checked){background:var(--accent);color:var(--accent-ink);font-weight:600}
+.seg label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:-2px}
+.num-in{display:flex;align-items:center;gap:8px;font-size:.9rem}
+.num-in input{width:4.6em;font:inherit;font-family:var(--f-mono);padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink)}
+
+/* path track */
+.track{display:flex;flex-wrap:wrap;gap:6px}
+.tk{display:flex;flex-direction:column;align-items:center;min-width:64px;padding:6px 8px;border-radius:8px;border:1px dashed var(--line);font-family:var(--f-mono);font-size:.82rem;opacity:.45}
+.tk.on{opacity:1;border-style:solid;background:var(--paper)}
+.tk.pos.on{background:var(--cheese-soft);border-color:transparent}
+.tk .tk-r{font-weight:600;font-size:.95rem}
+.tk .tk-l{font-family:var(--f-body);font-size:.7rem;color:var(--muted)}
+
+/* corridor */
+.corr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;border:2px solid var(--wall);border-left-width:8px;border-radius:6px;overflow:hidden}
+.cc{padding:10px 6px;text-align:center;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:2px;min-width:0}
+.cc:last-child{border-right:0}
+.cc.hl{background:var(--accent-soft)}
+.cc.cheese{background:var(--cheese-soft)}
+.cc-name{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.qv{font-family:var(--f-mono);font-size:.9rem;font-variant-numeric:tabular-nums;border-radius:4px}
+.qv.hot{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.qv.best{font-weight:600;text-decoration:underline;text-decoration-color:var(--cheese);text-decoration-thickness:2px;text-underline-offset:3px}
+
+/* tables */
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
+tr.win td{background:var(--cheese-soft)}
+
+/* callouts */
+.ask{border-radius:10px;padding:12px 16px;background:var(--cheese-soft);display:flex;flex-direction:column;gap:4px}
+.ask .lbl,.try .lbl{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.ask details summary{cursor:pointer;color:var(--muted);font-size:.9rem}
+.try{border-radius:10px;padding:12px 16px;border:1px dashed var(--accent);display:flex;flex-direction:column;gap:4px}
+.try .lbl{color:var(--accent)}
+.verdict{font-weight:600;padding:10px 14px;border-radius:8px}
+.verdict.good{background:var(--cheese-soft)}
+.verdict.bad{background:var(--trap-soft)}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.stat{border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;background:var(--paper)}
+.stat .big{font-family:var(--f-mono);font-size:1.5rem;font-weight:600}
+.kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 14px;margin:6px 0 2px}
+.kv dt{color:var(--muted);font-size:.88rem}
+.kv dd{margin:0}
+.kv dt.res,.kv dd.res{font-weight:600;color:var(--ink);border-top:1px solid var(--line);padding-top:3px}
+@media (max-width:480px){.kv{grid-template-columns:minmax(0,1fr)}.kv dd{margin-bottom:4px}}
+.note{font-size:.9rem;color:var(--muted);margin-top:4px}
+.plain-ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px}
+/* glossary */
+.term{text-decoration:underline dotted;text-decoration-color:var(--muted);text-decoration-thickness:1.5px;text-underline-offset:3px;cursor:help;border-radius:3px}
+.term:hover,.term.on{background:var(--accent-soft);text-decoration-color:var(--accent)}
+.term:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.tip{position:fixed;z-index:30;max-width:min(300px,calc(100vw - 24px));background:var(--tip-bg);color:var(--tip-fg);padding:10px 12px;border-radius:10px;font-size:.86rem;line-height:1.45;box-shadow:0 6px 24px rgba(0,0,0,.22);pointer-events:none;display:flex;flex-direction:column;gap:4px}
+.tip-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.tip-sym{font-family:var(--f-mono);font-weight:600;font-size:1.05rem;color:var(--tip-sym)}
+.tip-name{font-weight:600}
+ol.plain{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:8px}
+svg text{font-family:var(--f-mono)}
+
+/* lab */
+.lab{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:760px){.lab{grid-template-columns:minmax(0,1fr)}}
+.maze-wrap{display:flex;flex-direction:column;gap:10px;min-width:0}
+#maze{width:100%;max-width:440px;aspect-ratio:1;border-radius:8px;border:2px solid var(--wall);touch-action:manipulation;display:block}
+#maze.edit{cursor:pointer;outline:3px dashed var(--accent);outline-offset:3px}
+#retChart{width:100%;height:130px;display:block;border-radius:8px;border:1px solid var(--line);background:var(--paper)}
+.lab-calc{font-size:.9rem;display:flex;flex-direction:column;gap:4px;background:var(--paper);border-radius:8px;padding:12px 14px;border:1px solid var(--line);min-height:150px}
+.lab-calc .row{font-family:var(--f-mono);font-size:.84rem;overflow-x:auto;white-space:nowrap}
+.stats{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.88rem}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.8rem;color:var(--muted)}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:4px}
+</style>
+
+<nav class="nav" aria-label="Разделы">
+  <div class="nav-in">
+    <a href="#s1">1 Возврат</a><a href="#s2">2 Ценности Q</a><a href="#s3">3 Обучение</a><a href="#s4">4 Любопытство</a><a href="#s5">5 Награды</a><a href="#lab">Лаборатория</a>
+  </div>
+</nav>
+
+<main>
+<header class="hero">
+  <span class="eyebrow">Обучение с подкреплением · урок для одного ученика</span>
+  <h1>Мышка и Q-таблица</h1>
+  <p class="lead">Как научиться действовать, если никто не говорит правильный ответ, а только иногда даёт очки. Каждый расчёт здесь открывается по шагам: нажимай «Дальше» и смотри, откуда берётся каждое число. В конце — живой лабиринт, где мышка учится сама.</p>
+  <div class="rules" aria-label="Договорённости о наградах">
+    <span class="chip">обычный шаг −1</span><span class="chip pos">сыр +10</span><span class="chip neg">ловушка −10</span><span class="chip">сыр и ловушка заканчивают попытку</span>
+  </div>
+</header>
+
+<!-- 1 -->
+<section id="s1">
+  <h2><span class="sec-no">1</span>Мир, награда и возврат</h2>
+  <div class="prose">
+    <p><b>Агент</b> — тот, кто действует (мышка). <b>Среда</b> — всё остальное. <b>Состояние</b> — где мышка сейчас (клетка). <b>Действие</b> — куда она идёт. После каждого шага среда даёт <b>награду</b> — число. Одна попытка от старта до сыра или ловушки называется <b>эпизод</b>. Правило «в какой клетке какой ход делать» называется <b>политика</b>, и вся задача RL — найти лучшую политику.</p>
+    <p>Отличие от обычного обучения: когда нейросеть учат узнавать котиков, ей дают правильный ответ. Здесь правильного ответа нет. Мышка сделала ход, получила −1, и никто не сказал, какой ход был бы лучше. А хороший ход сейчас окупается только через несколько шагов.</p>
+    <p><b>Возврат G</b> — итоговый счёт за всю попытку. Мышка сравнивает G разных путей и выбирает больший. Будущие награды засчитываются со скидкой: каждая следующая умножается на γ ещё раз.</p>
+  </div>
+  <div class="formula">G = r₁ + γ·r₂ + γ²·r₃ + γ³·r₄ + …</div>
+
+  <div class="card" id="c1">
+    <span class="card-title">Считаем G по шагам</span>
+    <div class="controls">
+      <div class="seg" role="radiogroup" aria-label="Путь">
+        <label><input type="radio" name="p1" value="A" checked>Путь A: 3 шага</label>
+        <label><input type="radio" name="p1" value="B">Путь B: 6 шагов</label>
+      </div>
+      <label class="slider" for="g1">γ <input type="range" id="g1" min="0" max="1" step="0.05" value="0.9"><output id="g1o"></output></label>
+    </div>
+    <div class="track" id="track1"></div>
+    <div class="stepper" id="st1"></div>
+    <div class="tbl" id="cmp1"></div>
+  </div>
+
+  <div class="card">
+    <span class="card-title">Зачем вообще γ</span>
+    <ol class="plain">
+      <li><b>Будущее ненадёжно.</b> Пока дойдёшь, сыр может съесть кошка. γ = 0,9 можно читать так: на каждом шаге есть 10% шанс, что игра оборвётся.</li>
+      <li><b>Бесконечные игры.</b> Если давать +1 за каждый шаг, при γ = 1 вечная игра стоит ∞, и два вечных пути не сравнить. При γ = 0,9 та же вечность стоит 1 + 0,9 + 0,81 + … = 1 / (1 − 0,9) = <span class="n">10</span>.</li>
+      <li><b>Спешка без штрафов.</b> Даже если шаги бесплатные, γ делает далёкий сыр дешевле, и мышка выбирает короткий путь.</li>
+      <li><b>Горизонт.</b> Агент «видит» примерно на 1 / (1 − γ) шагов вперёд: γ = 0,9 → около 10 шагов, γ = 0,99 → около 100.</li>
+    </ol>
+    <p>Для ученика одной фразой: <b>γ — это насколько мышка терпеливая.</b></p>
+  </div>
+  <div class="ask"><span class="lbl">Вопрос ученику</span><p>При каком γ мышка не станет идти к сыру, до которого 5 шагов?</p><details><summary>Ответ</summary><p>При γ = 0 она видит только следующую награду, а это всегда −1. Проверь ползунком выше: при γ = 0 оба пути дают −1.</p></details></div>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <h2><span class="sec-no">2</span>Ценности Q и политика</h2>
+  <div class="prose">
+    <p><b>Q — это прогноз.</b> Q(клетка, ход) отвечает на вопрос: «Сколько очков я наберу, если сейчас сделаю этот ход, а потом буду играть хорошо?» В каждой клетке у мышки свой прогноз на каждый ход.</p>
+    <p>Если прогнозы известны, играть легко: в каждой клетке выбирай ход с самым большим прогнозом.</p>
+    <p><b>V — лучший прогноз в клетке.</b> V(клетка) = «сколько можно набрать, если стоишь здесь и играешь хорошо». Это просто самое большое из Q этой клетки.</p>
+    <p>Считать удобнее с конца, от сыра. Правило одно (его называют уравнением Беллмана):</p>
+  </div>
+  <div class="formula">прогноз хода = что получишь сразу + 0,9 × V(клетка, куда попал)</div>
+  <div class="prose"><p class="muted">Почему × 0,9: всё, что можно набрать из следующей клетки, придёт на шаг позже, а будущее идёт со скидкой (раздел 1). Формулой: Q(s, a) = r + γ · V(s′).</p></div>
+  <div class="card">
+    <span class="card-title">Коридор: считаем Q с конца</span>
+    <p class="muted">Клетки 1, 2, 3, справа сыр, слева стена. Обычный шаг −1, сыр +10, скидка γ = 0,9. Ход влево из клетки 1 упирается в стену: мышка тратит шаг и остаётся на месте. В каждом шаге ниже есть проверка: та же цепочка наград, посчитанная «в лоб», как в разделе 1.</p>
+    <div class="corr" id="corr2"></div>
+    <div class="stepper" id="st2"></div>
+  </div>
+  <div class="prose">
+    <p><b>Как это решает задачу «кто молодец».</b> Каждый шаг даёт −1, по награде сразу шаги не отличить. Но прогнозы у них разные: 6,2 → 8 → 10. Прогноз показывает, насколько ход приблизил к сыру. Это как запах сыра, который слабеет вдали: иди туда, где пахнет сильнее, и придёшь к сыру.</p>
+  </div>
+  <div class="ask"><span class="lbl">Вопрос ученику</span><p>Почему Q(3, ←) и Q(1, →) получились одинаковыми, 6,2?</p><details><summary>Ответ</summary><p>Оба хода ведут в клетку 2, а из неё до сыра 2 шага. Ценность зависит от того, куда попал, а не откуда пришёл.</p></details></div>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <h2><span class="sec-no">3</span>Как Q-learning учится</h2>
+  <div class="prose">
+    <p>В разделе 2 мы <b>знали карту</b>: где сыр, где стена. Поэтому смогли сразу посчитать все прогнозы. А мышка карту не знает. Она может только ходить и смотреть, что получилось.</p>
+    <p>Поэтому у неё есть тетрадка прогнозов, где сначала везде 0. После каждого шага она исправляет один прогноз — того хода, который только что сделала:</p>
+    <ol class="plain">
+      <li><b>Старый прогноз.</b> Что она думала об этом ходе до шага.</li>
+      <li><b>Подсказка.</b> Что она увидела: награда сразу + 0,9 × лучший прогноз в клетке, куда попала. Ровно то же правило, что в разделе 2.</li>
+      <li><b>Ошибка.</b> Подсказка − старый прогноз. Насколько она ошибалась. Больше нуля — вышло лучше, чем думала.</li>
+      <li><b>Сдвиг.</b> Прогноз меняют не до конца, а на часть ошибки. Эта часть называется α. При α = 0,5 — на половину: одному случаю сразу полностью не верим.</li>
+    </ol>
+  </div>
+  <div class="formula">новый прогноз = старый + α × (подсказка − старый)</div>
+  <div class="prose"><p class="muted">Формулой: Q(s,a) ← Q(s,a) + α · ( r + γ·max Q(s′,·) − Q(s,a) ). Часть в скобках — это ошибка.</p></div>
+  <div class="card">
+    <span class="card-title">Коридор, эпизод за эпизодом</span>
+    <p class="muted">Чтобы считать было легко, шаги здесь бесплатные (0), сыр +10, скидка γ = 0,9, α = 0,5. Мышка каждый раз идёт вправо от клетки 1 до сыра. В клетках показаны прогнозы хода вправо.</p>
+    <div class="controls"><label class="slider" for="e3">эпизодов <input type="range" id="e3" min="1" max="8" step="1" value="3"><output id="e3o"></output></label></div>
+    <div class="corr" id="corr3"></div>
+    <div class="stepper" id="st3"></div>
+  </div>
+  <div class="prose"><p>Главное: <b>знание о сыре ползёт назад</b>, по одной клетке за эпизод. Ещё заметь: шаги здесь бесплатные, а прогнозы у дальних клеток всё равно меньше (8,1 → 9 → 10). Торопиться мышку заставляет одна скидка γ.</p></div>
+
+  <div class="card">
+    <span class="card-title">Роль α: насколько верить новому опыту</span>
+    <p class="muted">Сыр волшебный: даёт то 10, то 0, в среднем 5. Мышка получает по очереди 10, 0, 10, 0… Сыр заканчивает эпизод, поэтому подсказка = просто полученная награда.</p>
+    <div class="controls"><label class="slider" for="a3">α <input type="range" id="a3" min="0" max="1" step="0.05" value="0.5"><output id="a3o"></output></label></div>
+    <svg id="a3svg" viewBox="0 0 340 140" role="img" aria-label="Оценка мышки после каждой попытки"></svg>
+    <div class="tbl" id="a3tbl"></div>
+    <p class="muted">При α = 1 мышка верит только последнему разу и прыгает между 0 и 10. При α = 0,1 она спокойная, но до правды (5) идёт долго. При α = 0 не учится вовсе.</p>
+  </div>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <h2><span class="sec-no">4</span>Исследование против использования</h2>
+  <div class="prose">
+    <p>У мышки всегда есть выбор: пойти туда, где она уже знает, что хорошо, или попробовать что-то новое. Первое называется <b>использование</b>, второе — <b>исследование</b>. Это одна из главных задач во всём обучении с подкреплением.</p>
+    <p><b>Пример из жизни.</b> Ты всегда заказываешь одну и ту же пиццу, потому что она вкусная. Это надёжно. Но если никогда не пробовать другие, можно так и не узнать, что в меню есть пицца ещё вкуснее. А если пробовать новое каждый раз, будешь часто есть невкусное.</p>
+    <p><b>Что случится с жадной мышкой.</b> Если мышка всегда идёт туда, где её прогноз самый большой, она быстро находит <i>какой-то</i> путь к сыру и потом ходит только по нему. Даже если рядом есть путь короче, она о нём не узнает: туда она ни разу не заходила, и прогноз там так и остался нулём.</p>
+    <p><b>Ещё хуже: одна неудача.</b> Представь два конфетных автомата. Первый всегда даёт немного. Второй иногда даёт много, иногда ничего, но в среднем больше. Если мышка в первый раз нажала второй и ничего не получила, жадная мышка решит, что он плохой, и больше к нему не подойдёт. Один неудачный случай навсегда закроет лучший вариант.</p>
+  </div>
+  <div class="card">
+    <span class="card-title">Решение: немного любопытства</span>
+    <div class="prose">
+      <p>Перед каждым ходом мышка как будто бросает кубик. Чаще всего она идёт лучшим известным ходом. Но иногда, например в 1 случае из 10, делает случайный ход: просто чтобы посмотреть, что там.</p>
+      <p>Эта доля случайных ходов называется <b>ε</b> (эпсилон). Можно звать её «уровень любопытства».</p>
+      <ul class="plain-ul">
+        <li><b>ε = 0</b> — мышка совсем не любопытная. Учится быстро, но может застрять на плохом пути.</li>
+        <li><b>ε = 1</b> — мышка ходит только наугад. Всё исследует, но никогда не пользуется тем, что узнала.</li>
+        <li><b>Небольшое ε</b> — золотая середина: в основном делает лучшее, но иногда проверяет новое.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="prose">
+    <p><b>Как делают на практике.</b> В начале обучения мышка ничего не знает, поэтому любопытство большое: пусть изучает мир. Чем больше она узнаёт, тем меньше любопытства нужно, и к концу она почти всегда идёт лучшим путём. Так же учатся люди: в новом месте много пробуют, а освоившись, действуют уверенно.</p>
+    <p><b>Хорошая новость.</b> Случайные ходы не портят обучение. Когда мышка обновляет прогноз, она смотрит на лучший ход в следующей клетке, а не на тот, что сделает на самом деле. Поэтому, даже бродя наугад, она узнаёт, как играть хорошо.</p>
+  </div>
+  <div class="try"><span class="lbl">Проверь в лаборатории</span><p>Поставь ε = 0 и сотри память мышки: часто она находит один путь и больше не ищет другие. Потом поставь ε = 0,2 и сравни.</p></div>
+  <div class="ask"><span class="lbl">Вопрос ученику</span><p>Когда в жизни стоит быть любопытным, а когда лучше действовать проверенным способом?</p><details><summary>Пример ответа</summary><p>В новом городе стоит исследовать улицы. В день экзамена лучше идти проверенной дорогой.</p></details></div>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <h2><span class="sec-no">5</span>Дизайн наград и их взлом</h2>
+  <div class="prose">
+    <p>Агент оптимизирует <b>ровно то число, которое мы посчитали</b>, а не то, что мы имели в виду. Он не знает, что мы хотели, чтобы мышка ела сыр. Каждую ловушку ниже можно проверить расчётом.</p>
+  </div>
+  <div class="card">
+    <span class="card-title">Калькулятор: сыр или ловушка</span>
+    <p class="muted">Сыр в n шагах, ловушка в соседней клетке. Что выгоднее мышке?</p>
+    <div class="controls">
+      <label class="num-in" for="c5s">шаг <input id="c5s" type="number" step="0.5" value="-2"></label>
+      <label class="num-in" for="c5t">ловушка <input id="c5t" type="number" step="1" value="-1"></label>
+      <label class="num-in" for="c5c">сыр <input id="c5c" type="number" step="1" value="10"></label>
+      <label class="num-in" for="c5n">шагов до сыра <input id="c5n" type="number" min="1" max="30" step="1" value="10"></label>
+      <label class="slider" for="c5g">γ <input type="range" id="c5g" min="0" max="1" step="0.05" value="1"><output id="c5go"></output></label>
+    </div>
+    <div class="ctrl"><button data-preset="bad">Ловушка 1: дорогой шаг</button><button data-preset="ok">Нормальные награды</button></div>
+    <div class="calc-out" id="c5out"></div>
+  </div>
+  <div class="card">
+    <span class="card-title">Ловушка 2: награда за жизнь</span>
+    <p class="muted">Решили поощрять осторожность: +1 за каждый шаг, сыр +5, γ = 0,9. Сколько стоит бродить вечно?</p>
+    <div class="stepper" id="st5"></div>
+  </div>
+  <div class="prose">
+    <p><b>Ловушка 3: подсказка за приближение.</b> Даём +1 за шаг ближе к сыру, а за шаг назад ничего. Мышка находит цикл: вперёд (+1), назад (0), снова вперёд (+1). Бесконечные очки, сыр не нужен. Исправление: награда за <b>изменение</b> близости, ближе +1, дальше −1. Тогда любой цикл в сумме даёт 0.</p>
+    <p><b>Это бывает в реальности.</b> В 2016 году OpenAI учила агента лодочной гонке CoastRunners. Очки давали за бонусы на трассе, и агент нашёл лагуну, где бонусы появлялись снова. Он кружил там, врезаясь в стены, и набирал больше очков, чем те, кто доезжал до финиша. Общее название — закон Гудхарта: когда мера становится целью, она перестаёт быть хорошей мерой.</p>
+  </div>
+  <div class="ask"><span class="lbl">Вопрос ученику</span><p>Робот-пылесос получает награду за каждую собранную пылинку. Как он может взломать такую награду?</p><details><summary>Пример ответа</summary><p>Высыпать пыль из контейнера и собрать её снова.</p></details></div>
+</section>
+
+<!-- lab -->
+<section id="lab">
+  <h2><span class="sec-no">★</span>Лаборатория: мышка учится сама</h2>
+  <div class="prose"><p>Настоящий Q-learning на лабиринте 5×5. Цвет клетки — её ценность V (жёлтый — хорошо, красный — плохо), стрелка — лучший ход по таблице. Нажимай «1 шаг», чтобы видеть расчёт каждого обновления, или «50 эпизодов», чтобы мышка быстро научилась.</p></div>
+  <div class="card">
+    <div class="lab">
+      <div class="maze-wrap">
+        <canvas id="maze" aria-label="Лабиринт"></canvas>
+        <div class="legend"><span><span class="sw" style="background:var(--wall)"></span>стена</span><span><span class="sw" style="background:var(--cheese)"></span>сыр</span><span><span class="sw" style="background:var(--trap)"></span>ловушка</span><span><span class="sw" style="background:var(--mouse)"></span>мышка</span></div>
+        <div class="ctrl"><button id="editBtn" aria-pressed="false">Редактировать лабиринт</button><button id="numBtn" aria-pressed="false">Показать Q числами</button></div>
+        <p class="muted" id="editHint" hidden>Нажимай на клетки: пусто → стена → ловушка → сыр. Память мышки при этом стирается.</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+        <div class="controls">
+          <label class="slider" for="la">α <input type="range" id="la" min="0.05" max="1" step="0.05" value="0.3"><output id="lao"></output></label>
+          <label class="slider" for="lg">γ <input type="range" id="lg" min="0" max="1" step="0.05" value="0.9"><output id="lgo"></output></label>
+          <label class="slider" for="le">ε <input type="range" id="le" min="0" max="1" step="0.05" value="0.1"><output id="leo"></output></label>
+        </div>
+        <div class="controls">
+          <label class="num-in" for="lrs">шаг <input id="lrs" type="number" step="0.5" value="-1"></label>
+          <label class="num-in" for="lrc">сыр <input id="lrc" type="number" step="1" value="10"></label>
+          <label class="num-in" for="lrt">ловушка <input id="lrt" type="number" step="1" value="-10"></label>
+        </div>
+        <div class="ctrl">
+          <button class="primary" id="b1">1 шаг</button><button id="bEp">1 эпизод</button><button id="b50">50 эпизодов</button><button id="bPath">Показать путь</button><button id="bStop" disabled>Стоп</button><button id="bReset">Стереть память</button>
+        </div>
+        <div class="lab-calc" id="labCalc"><span class="muted">Таблица Q пока из нулей. Нажми «1 шаг»: здесь появится расчёт обновления.</span></div>
+        <div class="stats" id="labStats"></div>
+        <canvas id="retChart" aria-label="Счёт по эпизодам"></canvas>
+        <p class="muted" style="font-size:.82rem">График: тонкая линия — счёт каждого эпизода, толстая — среднее за 10 эпизодов.</p>
+      </div>
+    </div>
+  </div>
+  <div class="try"><span class="lbl">Эксперименты</span>
+    <ol class="plain">
+      <li>Поставь γ = 0 и обучи 50 эпизодов. Почему стрелки перестали вести к сыру?</li>
+      <li>Поставь ε = 0 и сотри память. Найдёт ли мышка путь? Сравни с ε = 0,2.</li>
+      <li>Сделай шаг −3, а ловушку −1. Предскажи, что выучит мышка, и проверь.</li>
+      <li>Нарисуй второй сыр ближе к старту. Куда переключится мышка и сколько эпизодов ей нужно?</li>
+    </ol>
+  </div>
+</section>
+</main>
+
+<script>
+(()=>{
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+function fmt(x,d=2){ if(x===Infinity) return '∞'; if(x===-Infinity) return '−∞'; const p=10**d; let v=Math.round(x*p)/p; if(Math.abs(v)<1e-12) v=0; let s=v.toFixed(d); if(s.includes('.')) s=s.replace(/0+$/,'').replace(/\.$/,''); return s.replace('.',',').replace('-','−'); }
+const paren=(x,d)=> x<0?`(${fmt(x,d)})`:fmt(x,d);
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function css(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+/* ---------- stepper ---------- */
+function makeStepper(root, getSteps, onStep){
+  root.innerHTML = `<ol class="calc"></ol><div class="ctrl"><button data-act="reset">Сначала</button><button data-act="prev">Назад</button><button data-act="next" class="primary">Дальше</button><button data-act="all">Показать всё</button><span class="count"></span></div>`;
+  const list=$('.calc',root), cnt=$('.count',root);
+  let i=0;
+  function render(){
+    const steps=getSteps(); if(i>steps.length) i=steps.length;
+    list.innerHTML = i===0 ? '<li class="hint">Нажми «Дальше», чтобы начать расчёт.</li>' : steps.slice(0,i).map((s,k)=>`<li class="${k===i-1?'cur':''}">${s.html}</li>`).join('');
+    cnt.textContent = `${i} из ${steps.length}`;
+    $('[data-act=prev]',root).disabled = i===0;
+    $('[data-act=reset]',root).disabled = i===0;
+    $('[data-act=next]',root).disabled = i>=steps.length;
+    $('[data-act=all]',root).disabled = i>=steps.length;
+    if(onStep) onStep(i,steps);
+  }
+  root.addEventListener('click',e=>{const b=e.target.closest('button[data-act]'); if(!b) return; const n=getSteps().length;
+    const act={next:()=>{i=Math.min(n,i+1)},prev:()=>{i=Math.max(0,i-1)},reset:()=>{i=0},all:()=>{i=n}}[b.dataset.act]; act(); render();});
+  render();
+  return {render, reset(){i=0;render();}};
+}
+function bindOut(id,d=2,suffix=''){ const inp=$('#'+id), out=$('#'+id+'o'); const f=()=>{out.textContent=fmt(+inp.value,d)+suffix}; inp.addEventListener('input',f); f(); return inp; }
+
+/* ---------- 1. return ---------- */
+const PATHS={A:[-1,-1,10],B:[-1,-1,-1,-1,-1,10]};
+const Gsum=(rs,g)=>rs.reduce((s,r,k)=>s+r*g**k,0);
+const g1=bindOut('g1');
+function s1steps(){
+  const p=$('input[name=p1]:checked').value, g=+$('#g1').value, rs=PATHS[p];
+  let sum=0;
+  const steps=rs.map((r,k)=>{const w=g**k, c=r*w; sum+=c;
+    return {html:`<b>Шаг ${k+1}</b> (${r>0?'сыр':'обычный шаг'}): награда <span class="n">${fmt(r)}</span>, вес γ<sup>${k}</sup> = ${fmt(g)}<sup>${k}</sup> = <span class="n">${fmt(w,3)}</span>.<br>Вклад = ${fmt(r)} × ${fmt(w,3)} = <span class="n">${fmt(c,3)}</span>. Сумма пока: <span class="n">${fmt(sum,3)}</span>.`};});
+  const n=rs.length;
+  steps.push({html:`<b>Итого G = <span class="n">${fmt(sum,2)}</span></b> для пути ${p} при γ = ${fmt(g)}. Сыр сам по себе стоит 10, но пришёл на шаге ${n}, поэтому засчитан как 10 × ${fmt(g**(n-1),3)} = <span class="n">${fmt(10*g**(n-1),2)}</span>.`});
+  return steps;
+}
+const st1=makeStepper($('#st1'), s1steps, (i)=>{
+  const p=$('input[name=p1]:checked').value, g=+$('#g1').value, rs=PATHS[p];
+  $('#track1').innerHTML = rs.map((r,k)=>`<div class="tk ${k<i?'on':''} ${r>0?'pos':''}"><span class="tk-l">шаг ${k+1}</span><span class="tk-r">${fmt(r)}</span><span>× ${fmt(g**k,2)}</span></div>`).join('');
+});
+function s1cmp(){
+  const g=+$('#g1').value;
+  const rows=[[1,'γ = 1 (будущее не дешевеет)'],[g,`γ = ${fmt(g)} (сейчас на ползунке)`]].map(([gg,l])=>{const a=Gsum(PATHS.A,gg), b=Gsum(PATHS.B,gg);
+    return `<tr><td>${l}</td><td class="r n">${fmt(a)}</td><td class="r n">${fmt(b)}</td><td>${Math.abs(a-b)<1e-9?'одинаково':(a>b?'A':'B')}</td></tr>`}).join('');
+  $('#cmp1').innerHTML=`<table><thead><tr><th>Скидка</th><th class="r">G пути A</th><th class="r">G пути B</th><th>Выгоднее</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+g1.addEventListener('input',()=>{st1.reset();s1cmp();});
+$$('input[name=p1]').forEach(r=>r.addEventListener('change',()=>st1.reset()));
+s1cmp();
+
+/* ---------- corridor component ---------- */
+function corridor(el,q,opt={}){
+  let html=[1,2,3].map(s=>{const c=q[s]||{}; const hl=opt.hl&&opt.hl.s===s;
+    const v=a=>c[a]==null?'?':fmt(c[a]);
+    const best=opt.best&&c.L!=null&&c.R!=null?(c.R>=c.L?'R':'L'):null;
+    const L = opt.noL?'':`<div class="qv ${hl&&opt.hl.a==='L'?'hot':''} ${best==='L'?'best':''}">← ${v('L')}</div>`;
+    return `<div class="cc ${hl?'hl':''}"><div class="cc-name">клетка ${s}</div>${L}<div class="qv ${hl&&opt.hl.a==='R'?'hot':''} ${best==='R'?'best':''}">→ ${v('R')}</div></div>`;}).join('');
+  html+=`<div class="cc cheese"><div class="cc-name">сыр</div><div class="qv">+10</div></div>`;
+  el.innerHTML=html;
+}
+
+/* ---------- 2. Bellman backwards ---------- */
+function kv(title,rows,note){
+  return `<b>${title}</b><dl class="kv">${rows.map(([k,v,res])=>`<dt class="${res?'res':''}">${k}</dt><dd class="${res?'res':''}">${v}</dd>`).join('')}</dl>${note?`<p class="note">${note}</p>`:''}`;
+}
+const S2=[
+ {s:3,a:'R',v:10,html:kv('Q(3, →): мышка в клетке 3 идёт вправо',[
+   ['Сразу получает','+10, это сыр'],['Дальше','ничего: игра закончилась'],['Прогноз Q(3, →)','<span class="n">10</span>',1]],
+   'Лучший прогноз в клетке 3 — это 10. Запоминаем: <b>V(3) = 10</b>, из клетки 3 можно набрать 10.')},
+ {s:2,a:'R',v:8,html:kv('Q(2, →): мышка в клетке 2 идёт вправо',[
+   ['Сразу получает','−1, обычный шаг'],['Попадает в','клетку 3'],['Оттуда наберёт','V(3) = 10'],['Со скидкой (на шаг позже)','0,9 × 10 = 9'],
+   ['Прогноз Q(2, →)','−1 + 9 = <span class="n">8</span>',1],['Проверка цепочкой','награды −1, +10 → −1 + 0,9 × 10 = 8 ✓']],
+   'Из клетки 2 лучше хода нет, запоминаем: <b>V(2) = 8</b>.')},
+ {s:1,a:'R',v:6.2,html:kv('Q(1, →): мышка в клетке 1 идёт вправо',[
+   ['Сразу получает','−1, обычный шаг'],['Попадает в','клетку 2'],['Оттуда наберёт','V(2) = 8 (посчитали на прошлом шаге)'],['Со скидкой','0,9 × 8 = 7,2'],
+   ['Прогноз Q(1, →)','−1 + 7,2 = <span class="n">6,2</span>',1],['Проверка цепочкой','награды −1, −1, +10 → −1 − 0,9 + 0,81 × 10 = −1,9 + 8,1 = 6,2 ✓']],
+   'Ход влево из клетки 1 упирается в стену и только тратит шаг, он точно хуже. Значит <b>V(1) = 6,2</b>. Заметь: середина цепочки, −1 + 0,9 × 10, — это и есть V(2) = 8. Правило просто берёт готовый ответ у соседа.')},
+ {s:3,a:'L',v:6.2,html:kv('Q(3, ←): мышка в клетке 3, но идёт назад',[
+   ['Сразу получает','−1, обычный шаг'],['Попадает в','клетку 2'],['Оттуда наберёт','V(2) = 8 (дальше играет хорошо: вернётся к сыру)'],['Со скидкой','0,9 × 8 = 7,2'],
+   ['Прогноз Q(3, ←)','−1 + 7,2 = <span class="n">6,2</span>',1],['Проверка цепочкой','путь 3 → 2 → 3 → сыр: −1, −1, +10 → −1 − 0,9 + 8,1 = 6,2 ✓']],
+   'Шаг назад даёт 6,2, а шаг вправо — 10. Шаг назад стоит мышке 3,8 очка: два лишних шага, и сыр приходит позже.')},
+ {s:2,a:'L',v:4.58,html:kv('Q(2, ←): мышка в клетке 2 идёт назад',[
+   ['Сразу получает','−1'],['Попадает в','клетку 1'],['Оттуда наберёт','V(1) = 6,2'],['Со скидкой','0,9 × 6,2 = 5,58'],
+   ['Прогноз Q(2, ←)','−1 + 5,58 = <span class="n">4,58</span>',1],['Проверка цепочкой','путь 2 → 1 → 2 → 3 → сыр: −1, −1, −1, +10 → −1 − 0,9 − 0,81 + 0,729 × 10 = −2,71 + 7,29 = 4,58 ✓']])},
+ {s:1,a:'L',v:4.58,html:kv('Q(1, ←): мышка в клетке 1 идёт в стену',[
+   ['Сразу получает','−1, шаг потрачен'],['Попадает в','никуда: остаётся в клетке 1'],['Оттуда наберёт','V(1) = 6,2'],['Со скидкой','0,9 × 6,2 = 5,58'],
+   ['Прогноз Q(1, ←)','−1 + 5,58 = <span class="n">4,58</span>',1],['Проверка цепочкой','стена, потом 1 → 2 → 3 → сыр: −1, −1, −1, +10 → 4,58 ✓']])},
+ {html:'<b>Что получилось.</b> В каждой клетке берём ход с бо́льшим прогнозом (подчёркнут): везде вправо. Лучшие прогнозы растут к сыру: 6,2 → 8 → 10. Шаги назад всегда хуже, потому что тратят время.'}
+];
+makeStepper($('#st2'),()=>S2,(i)=>{
+  const q={1:{L:null,R:null},2:{L:null,R:null},3:{L:null,R:null}};
+  S2.slice(0,i).forEach(x=>{if(x.s) q[x.s][x.a]=x.v;});
+  const last=S2[i-1];
+  corridor($('#corr2'),q,{hl:last&&last.s?{s:last.s,a:last.a}:null,best:i===S2.length});
+});
+
+/* ---------- 3. Q-learning episodes ---------- */
+const e3=bindOut('e3',0);
+function s3steps(){
+  const nEp=+e3.value, a=.5, g=.9;
+  const q={1:{R:0},2:{R:0},3:{R:0}}; const steps=[];
+  for(let e=1;e<=nEp;e++){
+    for(let s=1;s<=3;s++){
+      const r=s===3?10:0, mx=s===3?0:q[s+1].R, old=q[s].R, t=r+g*mx, err=t-old, nw=old+a*err;
+      q[s].R=nw;
+      const rows = s===3
+        ? [['Старый прогноз','<span class="n">'+fmt(old)+'</span>'],['Что увидела','сыр, +10! Игра закончилась, дальше ничего'],['Подсказка','<span class="n">10</span>'],
+           ['Ошибка','10 − '+paren(old)+' = <span class="n">'+fmt(err)+'</span>'],['Новый прогноз',fmt(old)+' + 0,5 × '+paren(err)+' = <span class="n">'+fmt(nw)+'</span>',1]]
+        : [['Старый прогноз','<span class="n">'+fmt(old)+'</span>'],['Что увидела',`награда 0, попала в клетку ${s+1}, там прогноз вправо ${fmt(mx)}`],['Подсказка',`0 + 0,9 × ${fmt(mx)} = <span class="n">${fmt(t)}</span>`],
+           ['Ошибка',`${fmt(t)} − ${paren(old)} = <span class="n">${fmt(err)}</span>`],['Новый прогноз',`${fmt(old)} + 0,5 × ${paren(err)} = <span class="n">${fmt(nw)}</span>`,1]];
+      let note='';
+      if(Math.abs(err)<1e-9) note = mx===0&&s<3 ? `Ошибка 0: клетка ${s+1} пока ничего не знает про сыр, поэтому и учиться нечему. Прогноз не меняется.` : 'Ошибка 0: ничего нового, прогноз не меняется.';
+      else if(err>0) note = s===3 ? 'Вышло лучше, чем думала: прогноз растёт. Но только на половину ошибки.' : `Клетка ${s+1} уже кое-что знает про сыр, и это знание перешло сюда, со скидкой 0,9.`;
+      steps.push({q:{1:{...q[1]},2:{...q[2]},3:{...q[3]}},hl:{s,a:'R'},
+        html:kv(`Эпизод ${e}. Шаг из клетки ${s} ${s===3?'на сыр':'в клетку '+(s+1)}`,rows,note)});
+    }
+    const firstMsg = {1:' Про сыр узнала только клетка 3: когда мышка проходила клетки 1 и 2, впереди ещё никто ничего не знал.',2:' Теперь знание дошло до клетки 2.',3:' Знание дошло до клетки 1: каждый эпизод оно продвигается на одну клетку назад от сыра.'}[e]||'';
+    steps.push({q:{1:{...q[1]},2:{...q[2]},3:{...q[3]}},html:`<b>Итог эпизода ${e}.</b> Прогнозы вправо: клетка 1 — <span class="n">${fmt(q[1].R)}</span>, клетка 2 — <span class="n">${fmt(q[2].R)}</span>, клетка 3 — <span class="n">${fmt(q[3].R)}</span>.${firstMsg}`});
+  }
+  steps.push({q:{1:{...q[1]},2:{...q[2]},3:{...q[3]}},html:'<b>Если повторять долго</b>, прогнозы перестанут меняться на 10, 9 и 8,1. Это те же числа, что дало бы правило из раздела 2: клетка 3 — 10, клетка 2 — 0 + 0,9 × 10 = 9, клетка 1 — 0,9 × 9 = 8,1. Мышка сама, без карты, нашла правильные прогнозы.'});
+  return steps;
+}
+const st3=makeStepper($('#st3'),s3steps,(i,steps)=>{
+  const cur=steps[i-1]; const q=cur?cur.q:{1:{R:0},2:{R:0},3:{R:0}};
+  corridor($('#corr3'),q,{noL:true,hl:cur&&cur.hl});
+});
+e3.addEventListener('input',()=>st3.reset());
+
+/* alpha table */
+const a3=bindOut('a3');
+function s3alpha(){
+  const a=+a3.value, seq=[10,0,10,0,10,0,10,0]; let v=0; const vals=[0]; let rows='';
+  seq.forEach((r,k)=>{const nv=v+a*(r-v); rows+=`<tr><td class="r n">${k+1}</td><td class="r n">${r}</td><td class="mono">${fmt(v)} + ${fmt(a)} × (${r} − ${fmt(v)}) = <b>${fmt(nv)}</b></td></tr>`; vals.push(nv); v=nv;});
+  $('#a3tbl').innerHTML=`<table><thead><tr><th class="r">Попытка</th><th class="r">Сыр дал</th><th>Расчёт новой оценки</th></tr></thead><tbody>${rows}</tbody></table>`;
+  const X=k=>40+k*(285/8), Y=v=>118-v*10;
+  let s=`<line x1="40" x2="325" y1="${Y(5)}" y2="${Y(5)}" stroke="var(--cheese)" stroke-width="1.5" stroke-dasharray="5 4"/><text x="326" y="${Y(5)-4}" text-anchor="end" font-size="10" fill="var(--cheese)">среднее 5</text>`;
+  [0,10].forEach(t=>{s+=`<line x1="40" x2="325" y1="${Y(t)}" y2="${Y(t)}" stroke="var(--line)"/><text x="32" y="${Y(t)+4}" text-anchor="end" font-size="10" fill="var(--muted)">${t}</text>`;});
+  s+=`<text x="32" y="${Y(5)+4}" text-anchor="end" font-size="10" fill="var(--muted)">5</text>`;
+  s+=`<polyline fill="none" stroke="var(--accent)" stroke-width="2.5" points="${vals.map((v,k)=>X(k)+','+Y(v)).join(' ')}"/>`;
+  vals.forEach((v,k)=>{s+=`<circle cx="${X(k)}" cy="${Y(v)}" r="3.5" fill="var(--accent)"/>`; s+=`<text x="${X(k)}" y="136" text-anchor="middle" font-size="10" fill="var(--muted)">${k}</text>`;});
+  $('#a3svg').innerHTML=s;
+}
+a3.addEventListener('input',s3alpha); s3alpha();
+
+/* ---------- 5. rewards ---------- */
+const c5g=bindOut('c5g');
+function s5calc(){
+  const st=+$('#c5s').value||0, tr=+$('#c5t').value||0, ch=+$('#c5c').value||0, g=+c5g.value;
+  let n=Math.max(1,Math.min(30,Math.round(+$('#c5n').value||1)));
+  let S=0; for(let k=0;k<n-1;k++) S+=g**k;
+  const stepsPart=st*S, chPart=ch*g**(n-1), Gc=stepsPart+chPart, Gt=tr;
+  const sumTxt = n-1===0 ? 'обычных шагов нет' : `${n-1} обычных шагов: ${fmt(st)} × (${g===1?`1 + 1 + … = ${n-1}`:`1 + ${fmt(g)} + … + ${fmt(g)}<sup>${n-2}</sup> = ${fmt(S,3)}`}) = <span class="n">${fmt(stepsPart,2)}</span>`;
+  const ok=Gc>Gt;
+  $('#c5out').innerHTML=`<ol class="calc">
+    <li><b>Путь к сыру.</b> ${sumTxt}.</li>
+    <li>Сыр на шаге ${n}: ${fmt(ch)} × γ<sup>${n-1}</sup> = ${fmt(ch)} × ${fmt(g**(n-1),3)} = <span class="n">${fmt(chPart,2)}</span>.</li>
+    <li>G пути к сыру = ${fmt(stepsPart,2)} + ${paren(chPart,2)} = <span class="n">${fmt(Gc,2)}</span>.</li>
+    <li><b>Ловушка сразу</b>, на первом шаге (вес 1): G = <span class="n">${fmt(Gt,2)}</span>.</li>
+  </ol>
+  <div class="verdict ${ok?'good':'bad'}">${Math.abs(Gc-Gt)<1e-9?'Пути равноценны: мышке всё равно.':ok?`${fmt(Gc,2)} > ${fmt(Gt,2)}: мышка пойдёт к сыру.`:`${fmt(Gt,2)} > ${fmt(Gc,2)}: мышка бросится в ловушку. Мы хотели «торопись», а получили «закончи игру любым способом».`}</div>`;
+}
+['c5s','c5t','c5c','c5n','c5g'].forEach(id=>$('#'+id).addEventListener('input',s5calc));
+$$('[data-preset]').forEach(b=>b.addEventListener('click',()=>{const p=b.dataset.preset==='bad'?[-2,-1,10,10,1]:[-1,-10,10,10,0.9];
+  ['c5s','c5t','c5c','c5n','c5g'].forEach((id,k)=>{$('#'+id).value=p[k];}); $('#c5go').textContent=fmt(p[4]); s5calc();}));
+s5calc();
+function s5steps(){
+  const steps=[]; let sum=0;
+  for(let k=0;k<8;k++){const t=0.9**k; sum+=t; steps.push({html:`<b>Шаг ${k+1}:</b> +1 × 0,9<sup>${k}</sup> = <span class="n">${fmt(t,3)}</span>. Сумма: <span class="n">${fmt(sum,3)}</span>`});}
+  steps.push({html:'<b>Дальше сумма растёт всё медленнее</b> и в пределе дойдёт до 1 / (1 − 0,9) = <span class="n">10</span>. Это ценность «бродить вечно».'});
+  steps.push({html:'<b>Дойти до сыра за 3 шага:</b> 1 + 0,9 + 0,81 × 5 = 1,9 + 4,05 = <span class="n">5,95</span>.'});
+  steps.push({html:'<b>10 > 5,95:</b> мышка никогда не ест сыр и гуляет вечно. Мы хотели осторожности, а получили бесконечную прогулку.'});
+  return steps;
+}
+makeStepper($('#st5'),s5steps);
+
+/* ---------- lab ---------- */
+const R=5,C=5, DR=[-1,0,1,0], DC=[0,1,0,-1], ARW=['↑','→','↓','←'];
+let map=['S....','.WWT.','...W.','TW...','...WC'].map(r=>r.split(''));
+const start={r:0,c:0};
+let Q=new Float64Array(R*C*4), pos={...start}, ghost=null, trail=null;
+let episodes=0, returns=[], epRet=0, epLen=0, lastOutcome=null, last=null, job=null, steps=0;
+const ix=(r,c,a)=>((r*C)+c)*4+a;
+const P={};
+['la','lg','le'].forEach(id=>bindOut(id));
+function readP(){P.alpha=+$('#la').value;P.gamma=+$('#lg').value;P.eps=+$('#le').value;P.step=+$('#lrs').value||0;P.cheese=+$('#lrc').value||0;P.trap=+$('#lrt').value||0;}
+['la','lg','le','lrs','lrc','lrt'].forEach(id=>$('#'+id).addEventListener('input',readP)); readP();
+const qsOf=(r,c)=>[0,1,2,3].map(a=>Q[ix(r,c,a)]);
+function move(r,c,a){let nr=r+DR[a],nc=c+DC[a];if(nr<0||nr>=R||nc<0||nc>=C||map[nr][nc]==='W'){nr=r;nc=c;}
+  const t=map[nr][nc];let rew=P.step,done=false,what='';if(t==='C'){rew=P.cheese;done=true;what='cheese';}else if(t==='T'){rew=P.trap;done=true;what='trap';}
+  return {nr,nc,rew,done,what,bump:nr===r&&nc===c};}
+function choose(r,c,eps){const dice=Math.random();if(dice<eps)return{a:Math.floor(Math.random()*4),why:'rand',dice};
+  const qs=qsOf(r,c),m=Math.max(...qs),best=[0,1,2,3].filter(a=>qs[a]===m);return{a:best[Math.floor(Math.random()*best.length)],why:best.length>1?'tie':'best',dice};}
+function learnStep(){
+  ghost=null; trail=null;
+  const {a,why,dice}=choose(pos.r,pos.c,P.eps), m=move(pos.r,pos.c,a), k=ix(pos.r,pos.c,a), old=Q[k];
+  const mx=m.done?0:Math.max(...qsOf(m.nr,m.nc)), target=m.rew+P.gamma*mx, err=target-old, nq=old+P.alpha*err;
+  Q[k]=nq; steps++;
+  last={r:pos.r,c:pos.c,a,why,dice,...m,old,mx,target,err,nq,alpha:P.alpha,gamma:P.gamma,eps:P.eps};
+  epRet+=m.rew; epLen++; pos={r:m.nr,c:m.nc};
+  if(m.done||epLen>=200){ returns.push(epRet); episodes++; lastOutcome=m.done?m.what:'lost'; ghost={...pos}; epRet=0; epLen=0; pos={...start}; return true; }
+  return false;
+}
+function calcHTML(){
+  if(!last) return '<span class="muted">Таблица Q пока из нулей. Нажми «1 шаг»: здесь появится расчёт обновления.</span>';
+  const L=last, cell=`(${L.r+1}, ${L.c+1})`;
+  const why=L.why==='rand'?`кубик ${fmt(L.dice)} &lt; ε = ${fmt(L.eps)}: случайный ход`:L.why==='tie'?'несколько ходов с одинаковым Q, выбран наугад':'лучший ход по таблице';
+  const where=L.bump?'упёрлась в стену, осталась на месте':`попала в (${L.nr+1}, ${L.nc+1})`+(L.what==='cheese'?', это сыр':L.what==='trap'?', это ловушка':'');
+  return `<div><b>Клетка ${cell}, ход ${ARW[L.a]}</b> — ${why}.</div>
+  <div>Мышка ${where}. Награда r = <span class="n">${fmt(L.rew)}</span>.</div>
+  <div class="row">подсказка = r + γ × max Q(новая клетка) = ${fmt(L.rew)} + ${fmt(L.gamma)} × ${L.done?'0 (эпизод кончился)':paren(L.mx)} = ${fmt(L.target)}</div>
+  <div class="row">ошибка = подсказка − старый прогноз = ${fmt(L.target)} − ${paren(L.old)} = ${fmt(L.err)}</div>
+  <div class="row">Q${cell.replace(')',', '+ARW[L.a]+')')} = ${fmt(L.old)} + ${fmt(L.alpha)} × ${paren(L.err)} = <b>${fmt(L.nq)}</b></div>`;
+}
+function statsHTML(){
+  const lastR=returns.length?returns[returns.length-1]:null, avg10=returns.length?returns.slice(-10).reduce((a,b)=>a+b,0)/Math.min(10,returns.length):null;
+  const out={cheese:'нашла сыр',trap:'попала в ловушку',lost:'заблудилась (200 шагов)'}[lastOutcome]||'';
+  return `<span>Эпизодов: <b class="n">${episodes}</b></span><span>Шагов всего: <b class="n">${steps}</b></span>${lastR!==null?`<span>Последний: <b class="n">${fmt(lastR)}</b>, ${out}</span><span>Среднее за 10: <b class="n">${fmt(avg10)}</b></span>`:''}`;
+}
+function hex(c){c=c.replace('#','');if(c.length===3)c=c.split('').map(x=>x+x).join('');return[0,2,4].map(i=>parseInt(c.slice(i,i+2),16));}
+function mix(a,b,t){const A=hex(a),B=hex(b);return`rgb(${A.map((x,i)=>Math.round(x+(B[i]-x)*t)).join(',')})`;}
+let showNums=false, editMode=false;
+function drawMaze(){
+  const cv=$('#maze'), size=cv.clientWidth; if(!size) return; const dpr=window.devicePixelRatio||1;
+  cv.width=size*dpr; cv.height=size*dpr; const ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0);
+  const s=size/C, col={card:css('--card'),line:css('--line'),wall:css('--wall'),cheese:css('--cheese'),cs:css('--cheese-soft'),trap:css('--trap'),ts:css('--trap-soft'),ink:css('--ink'),muted:css('--muted'),mouse:css('--mouse'),accent:css('--accent')};
+  let maxAbs=1; for(let r=0;r<R;r++)for(let c=0;c<C;c++){if('WCT'.includes(map[r][c]))continue;const v=Math.max(...qsOf(r,c));maxAbs=Math.max(maxAbs,Math.abs(v));}
+  for(let r=0;r<R;r++)for(let c=0;c<C;c++){
+    const x=c*s,y=r*s,t=map[r][c];
+    if(t==='W'){ctx.fillStyle=col.wall;ctx.fillRect(x,y,s,s);continue;}
+    if(t==='C'){ctx.fillStyle=col.cs;ctx.fillRect(x,y,s,s);ctx.fillStyle=col.cheese;ctx.beginPath();ctx.moveTo(x+s*.22,y+s*.7);ctx.lineTo(x+s*.78,y+s*.7);ctx.lineTo(x+s*.78,y+s*.34);ctx.closePath();ctx.fill();continue;}
+    if(t==='T'){ctx.fillStyle=col.ts;ctx.fillRect(x,y,s,s);ctx.strokeStyle=col.trap;ctx.lineWidth=Math.max(3,s*.07);ctx.lineCap='round';ctx.beginPath();ctx.moveTo(x+s*.3,y+s*.3);ctx.lineTo(x+s*.7,y+s*.7);ctx.moveTo(x+s*.7,y+s*.3);ctx.lineTo(x+s*.3,y+s*.7);ctx.stroke();continue;}
+    const qs=qsOf(r,c), v=Math.max(...qs), any=qs.some(q=>q!==0);
+    ctx.fillStyle=!any?col.card:(v>=0?mix(col.card,col.cheese,Math.min(1,v/maxAbs)*.75):mix(col.card,col.trap,Math.min(1,-v/maxAbs)*.6));
+    ctx.fillRect(x,y,s,s);
+    if(t==='S'){ctx.fillStyle=col.muted;ctx.font=`${Math.max(9,s*.14)}px ${css('--f-body')}`;ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText('старт',x+4,y+3);}
+    if(any){const b=qs.indexOf(v);ctx.save();ctx.translate(x+s/2,y+s/2);ctx.rotate(b*Math.PI/2);ctx.strokeStyle=col.ink;ctx.globalAlpha=.8;ctx.lineWidth=Math.max(2,s*.05);ctx.lineCap='round';ctx.lineJoin='round';
+      ctx.beginPath();ctx.moveTo(0,s*.18);ctx.lineTo(0,-s*.18);ctx.moveTo(-s*.1,-s*.07);ctx.lineTo(0,-s*.18);ctx.lineTo(s*.1,-s*.07);ctx.stroke();ctx.restore();}
+    if(showNums){ctx.fillStyle=col.ink;ctx.globalAlpha=.85;ctx.font=`${Math.max(8,s*.13)}px ${css('--f-mono')}`;ctx.textAlign='center';ctx.textBaseline='middle';
+      const f=q=>fmt(q,1);ctx.fillText(f(qs[0]),x+s/2,y+s*.12);ctx.fillText(f(qs[2]),x+s/2,y+s*.88);ctx.textAlign='left';ctx.fillText(f(qs[3]),x+3,y+s/2);ctx.textAlign='right';ctx.fillText(f(qs[1]),x+s-3,y+s/2);ctx.globalAlpha=1;}
+  }
+  ctx.strokeStyle=col.line;ctx.lineWidth=1;for(let k=1;k<C;k++){ctx.beginPath();ctx.moveTo(k*s,0);ctx.lineTo(k*s,size);ctx.moveTo(0,k*s);ctx.lineTo(size,k*s);ctx.stroke();}
+  if(trail&&trail.length>1){ctx.strokeStyle=col.accent;ctx.lineWidth=Math.max(3,s*.07);ctx.lineCap='round';ctx.lineJoin='round';ctx.globalAlpha=.75;ctx.beginPath();trail.forEach((p,k)=>{const px=p.c*s+s/2,py=p.r*s+s/2;k?ctx.lineTo(px,py):ctx.moveTo(px,py);});ctx.stroke();ctx.globalAlpha=1;}
+  const m=ghost||pos; const mx=m.c*s+s/2, my=m.r*s+s/2, rr=s*.2;
+  ctx.fillStyle=col.mouse;ctx.beginPath();ctx.arc(mx-rr*.75,my-rr*.8,rr*.5,0,7);ctx.arc(mx+rr*.75,my-rr*.8,rr*.5,0,7);ctx.fill();
+  ctx.beginPath();ctx.arc(mx,my,rr,0,7);ctx.fill();ctx.fillStyle=col.ink;ctx.beginPath();ctx.arc(mx-rr*.35,my-rr*.1,rr*.12,0,7);ctx.arc(mx+rr*.35,my-rr*.1,rr*.12,0,7);ctx.fill();
+}
+function drawChart(){
+  const cv=$('#retChart'), w=cv.clientWidth, h=cv.clientHeight; if(!w) return; const dpr=window.devicePixelRatio||1;
+  cv.width=w*dpr;cv.height=h*dpr;const ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
+  const data=returns.slice(-300), muted=css('--muted'), accent=css('--accent'), line=css('--line');
+  ctx.font=`11px ${css('--f-mono')}`;ctx.fillStyle=muted;ctx.textBaseline='middle';
+  if(!data.length){ctx.textAlign='center';ctx.fillText('Здесь появится счёт по эпизодам',w/2,h/2);return;}
+  let lo=Math.min(0,...data), hi=Math.max(0,...data); if(hi-lo<1){hi+=1;}
+  const L=44,Rr=8,T=10,Bm=10, X=k=>L+(data.length<2?0:k*(w-L-Rr)/(data.length-1)), Y=v=>T+(hi-v)*(h-T-Bm)/(hi-lo);
+  ctx.strokeStyle=line;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(L,Y(0));ctx.lineTo(w-Rr,Y(0));ctx.stroke();
+  ctx.textAlign='right';ctx.fillText(fmt(hi,0),L-6,Y(hi));ctx.fillText('0',L-6,Y(0));if(lo<0)ctx.fillText(fmt(lo,0),L-6,Y(lo));
+  ctx.strokeStyle=muted;ctx.globalAlpha=.4;ctx.beginPath();data.forEach((v,k)=>{k?ctx.lineTo(X(k),Y(v)):ctx.moveTo(X(k),Y(v));});ctx.stroke();ctx.globalAlpha=1;
+  ctx.strokeStyle=accent;ctx.lineWidth=2.5;ctx.beginPath();data.forEach((v,k)=>{const s=data.slice(Math.max(0,k-9),k+1);const a=s.reduce((x,y)=>x+y,0)/s.length;k?ctx.lineTo(X(k),Y(a)):ctx.moveTo(X(k),Y(a));});ctx.stroke();
+  const lk=data.length-1, lv=data.slice(-10).reduce((x,y)=>x+y,0)/Math.min(10,data.length);ctx.fillStyle=accent;ctx.beginPath();ctx.arc(X(lk),Y(lv),3.5,0,7);ctx.fill();
+}
+function renderLab(){ drawMaze(); drawChart(); $('#labCalc').innerHTML=calcHTML(); $('#labStats').innerHTML=statsHTML(); }
+const btns=['b1','bEp','b50','bPath','bReset','editBtn'];
+function setBusy(b){btns.forEach(id=>$('#'+id).disabled=b);$('#bStop').disabled=!b;}
+function animate(stepFn,delay){ setBusy(true); const tick=()=>{ const done=stepFn(); renderLab(); if(done||!job){ stop(); return; } job=setTimeout(tick,reduceMotion?0:delay); }; job=setTimeout(tick,0); }
+function stop(){ if(job) clearTimeout(job); job=null; setBusy(false); }
+$('#bStop').addEventListener('click',()=>{stop();renderLab();});
+$('#b1').addEventListener('click',()=>{learnStep();renderLab();});
+$('#bEp').addEventListener('click',()=>{ ghost=null; animate(()=>learnStep(),60); });
+$('#b50').addEventListener('click',()=>{ let n=0; while(n<50){ if(learnStep()) n++; } renderLab(); });
+$('#bPath').addEventListener('click',()=>{
+  let p={...start}, k=0; trail=[{...p}]; ghost=null; pos={...start}; epRet=0; epLen=0;
+  const savedLast=last;
+  animate(()=>{ const {a}=choose(p.r,p.c,0); const m=move(p.r,p.c,a); p={r:m.nr,c:m.nc}; trail.push({...p}); ghost={...p}; k++;
+    const t=trail; if(m.done||k>=30){ const msg=m.what==='cheese'?`Выученный путь ведёт к сыру за ${k} шагов.`:m.what==='trap'?'Выученный путь ведёт в ловушку.':'По выученной таблице мышка ходит кругами: ей нужно больше обучения.';
+      setTimeout(()=>{$('#labCalc').innerHTML=`<div><b>Показ пути без обучения, ε = 0.</b></div><div>${msg}</div>`; trail=t;},0); return true;} return false; },140);
+  last=savedLast;
+});
+$('#bReset').addEventListener('click',()=>{Q=new Float64Array(R*C*4);pos={...start};ghost=null;trail=null;episodes=0;returns=[];epRet=0;epLen=0;lastOutcome=null;last=null;steps=0;renderLab();});
+$('#numBtn').addEventListener('click',e=>{showNums=!showNums;e.currentTarget.setAttribute('aria-pressed',showNums);drawMaze();});
+$('#editBtn').addEventListener('click',e=>{editMode=!editMode;e.currentTarget.setAttribute('aria-pressed',editMode);$('#maze').classList.toggle('edit',editMode);$('#editHint').hidden=!editMode;});
+$('#maze').addEventListener('click',e=>{ if(!editMode||job) return; const rect=e.currentTarget.getBoundingClientRect(); const c=Math.floor((e.clientX-rect.left)/rect.width*C), r=Math.floor((e.clientY-rect.top)/rect.height*R);
+  if(r<0||r>=R||c<0||c>=C||map[r][c]==='S') return; const cyc={'.':'W','W':'T','T':'C','C':'.'}; map[r][c]=cyc[map[r][c]]; $('#bReset').click(); });
+new ResizeObserver(()=>{drawMaze();drawChart();}).observe($('#maze'));
+new ResizeObserver(()=>drawChart()).observe($('#retChart'));
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{drawMaze();drawChart();});
+new MutationObserver(()=>{drawMaze();drawChart();}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+renderLab();
+/* ---------- glossary tooltips ---------- */
+const GL=[
+ {sym:'V',name:'лучший прогноз в клетке',def:'V(клетка) — сколько очков можно набрать, если стоишь здесь и дальше играешь хорошо. Это самое большое из Q этой клетки.',w:['лучш[а-яё]* прогноз[а-яё]*'],s:['\\bV\\b']},
+ {sym:'γ',name:'скидка (гамма)',def:'Насколько мышка терпеливая. Каждая следующая награда умножается на γ ещё раз. γ = 0 — думает только о следующем шаге, γ близко к 1 — думает далеко вперёд.',w:['скидк[а-яё]*','гамма'],s:['γ']},
+ {sym:'α',name:'скорость обучения (альфа)',def:'Какую часть ошибки мышка исправляет за раз. α = 0,5 — сдвигает прогноз на половину пути к подсказке. α = 1 — верит только последнему разу.',w:['скорост[ьи] обучения','альфа'],s:['α']},
+ {sym:'ε',name:'любопытство (эпсилон)',def:'Доля случайных ходов. С вероятностью ε мышка идёт наугад, чтобы узнать новое, иначе — лучшим известным ходом.',w:['любопытств[а-яё]*','любопытн[а-яё]*','эпсилон'],s:['ε']},
+ {sym:'Q',name:'прогноз хода',def:'Q(клетка, ход) — сколько очков мышка наберёт, если сделает этот ход, а потом будет играть хорошо.',w:['прогноз[а-яё]*'],s:['\\bQ\\b(?!-)']},
+ {sym:'G',name:'возврат, итоговый счёт',def:'Сумма всех наград за одну попытку. Будущие награды берутся со скидкой γ: G = r₁ + γ·r₂ + γ²·r₃ + …',w:['возврат[а-яё]*','итогов[а-яё]* сч[её]т[а-яё]*'],s:['\\bG\\b']},
+ {sym:'r',name:'награда',def:'Число, которое мышка получает сразу после шага. У нас: −1 за обычный шаг, +10 за сыр, −10 за ловушку.',w:['наград[а-яё]*'],s:['\\br(?![a-zA-Z])']},
+ {sym:'r + γ·max Q(s′)',name:'подсказка',def:'Что мышка узнала после шага: награда сразу + γ × лучший прогноз в клетке, куда попала. С ней сравнивают старый прогноз.',w:['подсказк[а-яё]*'],s:[]},
+ {sym:'подсказка − Q',name:'ошибка',def:'Насколько мышка ошибалась: подсказка минус старый прогноз. Больше нуля — вышло лучше, чем она думала, и прогноз растёт.',w:['ошибк[а-яё]*','ошибок'],s:[]},
+ {sym:'s, s′',name:'состояние (клетка)',def:'Где мышка находится. s — клетка до шага, s′ — клетка, куда она попала.',w:['состояни[а-яё]*'],s:['\\bs′','\\bs\\b']},
+ {sym:'a',name:'действие (ход)',def:'Что мышка делает: идёт вверх, вниз, влево или вправо.',w:['действи[а-яё]*'],s:['\\ba\\b']},
+ {sym:'',name:'эпизод',def:'Одна попытка мышки: от старта до сыра или ловушки.',w:['эпизод[а-яё]*'],s:[]},
+ {sym:'',name:'агент',def:'Тот, кто действует и учится. У нас это мышка.',w:['агент[а-яё]*'],s:[]},
+ {sym:'',name:'политика',def:'Правило «в какой клетке какой ход делать». Цель обучения — найти лучшую политику.',w:['политик[а-яё]*'],s:[]},
+];
+const cap=re=>/^[а-яё]/.test(re)?`[${re[0].toUpperCase()}${re[0]}]${re.slice(1)}`:re;
+const parts=[]; GL.forEach((g,gi)=>{g.w.forEach(w=>parts.push({re:cap(w),gi})); g.s.forEach(x=>parts.push({re:x,gi}));});
+parts.sort((a,b)=>b.re.length-a.re.length);
+const GRE=new RegExp(parts.map(p=>`(${p.re})`).join('|'),'g');
+const SKIP=new Set(['SCRIPT','STYLE','BUTTON','INPUT','OUTPUT','TEXTAREA','SELECT','SVG','CANVAS','TITLE']);
+function skipEl(el){for(let e=el;e&&e!==document.body;e=e.parentElement){if(SKIP.has(e.tagName.toUpperCase())||e.classList.contains('term')||e.classList.contains('nav')||e.classList.contains('tip'))return true;}return false;}
+let mo=null;
+function glossify(root){
+  if(mo) mo.disconnect();
+  const tw=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:n=>(!n.nodeValue.trim()||skipEl(n.parentElement))?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});
+  const nodes=[]; while(tw.nextNode()) nodes.push(tw.currentNode);
+  nodes.forEach(n=>{
+    const t=n.nodeValue; GRE.lastIndex=0; if(!GRE.test(t)) return; GRE.lastIndex=0;
+    const frag=document.createDocumentFragment(); let last=0,m;
+    while((m=GRE.exec(t))){
+      const k=m.slice(1).findIndex(x=>x!==undefined); const gi=parts[k].gi;
+      if(m.index>last) frag.appendChild(document.createTextNode(t.slice(last,m.index)));
+      const sp=document.createElement('span'); sp.className='term'; sp.tabIndex=0; sp.dataset.g=gi; sp.textContent=m[0]; frag.appendChild(sp);
+      last=m.index+m[0].length; if(!m[0].length) GRE.lastIndex++;
+    }
+    if(last<t.length) frag.appendChild(document.createTextNode(t.slice(last)));
+    n.parentNode.replaceChild(frag,n);
+  });
+  if(mo) mo.observe($('main'),{childList:true,subtree:true});
+}
+const tip=document.createElement('div'); tip.className='tip'; tip.id='tip'; tip.setAttribute('role','tooltip'); tip.hidden=true; document.body.appendChild(tip);
+let tipFor=null;
+function showTip(el){
+  const g=GL[+el.dataset.g]; if(!g) return;
+  tip.innerHTML=`<div class="tip-head">${g.sym?`<span class="tip-sym">${g.sym}</span>`:''}<span class="tip-name">${g.sym?'— ':''}${g.name}</span></div><div>${g.def}</div>`;
+  tip.hidden=false; if(tipFor) tipFor.classList.remove('on'); tipFor=el; el.classList.add('on'); el.setAttribute('aria-describedby','tip');
+  const r=el.getBoundingClientRect(), tw=tip.offsetWidth, th=tip.offsetHeight, vw=document.documentElement.clientWidth;
+  let x=Math.min(Math.max(12,r.left+r.width/2-tw/2),vw-tw-12), y=r.top-th-8; if(y<56) y=r.bottom+8;
+  tip.style.left=x+'px'; tip.style.top=y+'px';
+}
+function hideTip(){ tip.hidden=true; if(tipFor){tipFor.classList.remove('on');tipFor.removeAttribute('aria-describedby');} tipFor=null; }
+document.addEventListener('mouseover',e=>{const t=e.target.closest&&e.target.closest('.term'); if(t) showTip(t);});
+document.addEventListener('mouseout',e=>{const t=e.target.closest&&e.target.closest('.term'); if(t&&!t.contains(e.relatedTarget)) hideTip();});
+document.addEventListener('focusin',e=>{if(e.target.classList&&e.target.classList.contains('term')) showTip(e.target);});
+document.addEventListener('focusout',e=>{if(e.target.classList&&e.target.classList.contains('term')) hideTip();});
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('.term'); if(t){ if(tipFor===t&&!tip.hidden) hideTip(); else showTip(t);} else if(!e.target.closest('.tip')) hideTip();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape') hideTip();});
+window.addEventListener('scroll',hideTip,{passive:true});
+mo=new MutationObserver(muts=>{ const roots=new Set(); muts.forEach(m=>m.addedNodes.forEach(n=>{ if(n.nodeType===1) roots.add(n); else if(n.nodeType===3&&n.parentElement) roots.add(n.parentElement); })); roots.forEach(r=>{ if(r.isConnected) glossify(r); }); });
+glossify($('main'));
+})();
+</script>
+
+</body></html>
